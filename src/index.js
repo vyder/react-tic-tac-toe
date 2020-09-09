@@ -17,16 +17,82 @@ function Square(props) {
 // props:
 //    - player:  the string identifier of the current player
 //    - onClick: the delegate called when the cell is clicked
+//    - squares
+//    - winner
+//    - gameOver
 //
 class Board extends React.Component {
     constructor(props) {
         super(props);
+    }
+
+    renderSquare(i) {
+        return <Square value={this.props.squares[i]}
+                       onClick={() => this.props.onSquareClicked(i)} />;
+    }
+
+    render() {
+        const winner = this.props.winner;
+        let status;
+
+        if(this.props.gameOver) {
+            if(winner) {
+                status = winner + " wins!";
+
+            } else {
+                status = 'Game Over!';
+            }
+        } else {
+            status = 'Next player: ' + this.props.player;
+        }
+
+        return (
+          <div>
+            <div className="status">{status}</div>
+            <div className="board-row">
+              {this.renderSquare(0)}
+              {this.renderSquare(1)}
+              {this.renderSquare(2)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(3)}
+              {this.renderSquare(4)}
+              {this.renderSquare(5)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(6)}
+              {this.renderSquare(7)}
+              {this.renderSquare(8)}
+            </div>
+          </div>
+        );
+    }
+}
+
+class Game extends React.Component {
+    constructor(props) {
+        super(props);
         this.state = {
-            squares:  Array(9).fill(null),
-            winner:   null,
-            gameOver: false,
-            // history: []
-        };
+            currentPlayer: null,
+            squares:       Array(9).fill(null),
+            history:       [],
+            winner:        null,
+            gameOver:      false,
+        }
+
+        let isXFirst = (Math.floor(Math.random() * 2) === 0);
+        let startingPlayer = isXFirst ? 'X' : 'O';
+
+        this.state.currentPlayer = startingPlayer;
+    }
+
+    swapPlayer() {
+        let nextPlayer = 'X';
+        if(this.state.currentPlayer === 'X') {
+            nextPlayer = 'O'
+        }
+
+        this.setState({ currentPlayer: nextPlayer });
     }
 
     computeState(squares) {
@@ -69,85 +135,12 @@ class Board extends React.Component {
 
         const newSquares = this.state.squares.slice();
 
-        // this.state.history.push({squares: this.state.squares});
-
-        newSquares[index] = this.props.player;
+        newSquares[index] = this.state.currentPlayer;
         this.setState({ squares: newSquares });
 
         // Update board state
         this.computeState(newSquares);
 
-
-        // Notify parent
-        this.props.onClick();
-    }
-
-    renderSquare(i) {
-        return <Square value={this.state.squares[i]}
-                       onClick={() => this.onSquareClicked(i)} />;
-    }
-
-    render() {
-        const winner = this.state.winner;
-        let status;
-
-        if(this.state.gameOver) {
-            if(winner) {
-                status = winner + " wins!";
-
-            } else {
-                status = 'Game Over!';
-            }
-        } else {
-            status = 'Next player: ' + this.props.player;
-        }
-
-        return (
-          <div>
-            <div className="status">{status}</div>
-            <div className="board-row">
-              {this.renderSquare(0)}
-              {this.renderSquare(1)}
-              {this.renderSquare(2)}
-            </div>
-            <div className="board-row">
-              {this.renderSquare(3)}
-              {this.renderSquare(4)}
-              {this.renderSquare(5)}
-            </div>
-            <div className="board-row">
-              {this.renderSquare(6)}
-              {this.renderSquare(7)}
-              {this.renderSquare(8)}
-            </div>
-          </div>
-        );
-    }
-}
-
-class Game extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            currentPlayer: null
-        }
-
-        let isXFirst = (Math.floor(Math.random() * 2) === 0);
-        let startingPlayer = isXFirst ? 'X' : 'O';
-
-        this.state.currentPlayer = startingPlayer;
-    }
-
-    swapPlayer() {
-        let nextPlayer = 'X';
-        if(this.state.currentPlayer === 'X') {
-            nextPlayer = 'O'
-        }
-
-        this.setState({ currentPlayer: nextPlayer });
-    }
-
-    handleClick() {
         this.swapPlayer();
     }
 
@@ -155,7 +148,11 @@ class Game extends React.Component {
         return (
             <div className="game">
                 <div className="game-board">
-                    <Board player={this.state.currentPlayer} onClick={() => this.handleClick()}/>
+                    <Board player={this.state.currentPlayer}
+                           squares={this.state.squares}
+                           winner={this.state.winner}
+                           gameOver={this.state.gameOver}
+                           onSquareClicked={(i) => this.onSquareClicked(i)}/>
                 </div>
                 <div className="game-info">
                     <div>{/* status */}</div>
