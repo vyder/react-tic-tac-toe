@@ -1,77 +1,44 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
+import { Player } from './player';
+import { Board } from './board';
 
-// props:
-//    - value:   the cell value to display
-//    - onClick: the delegate called when the cell is clicked
-//
-function Square(props) {
-    return (
-        <button className="square" onClick={props.onClick}>
-            {props.value}
-        </button>
-    );
+interface HistorySnapshot {
+    player:  Player,
+    squares: Player[]
 }
 
-// props:
-//    - onClick: the delegate called when the cell is clicked
-//    - squares: squares to render
-//
-class Board extends React.Component {
-    renderSquare(i) {
-        return <Square value={this.props.squares[i]}
-                       onClick={() => this.props.onClick(i)} />;
-    }
-
-    render() {
-        return (
-          <div>
-            <div className="board-row">
-              {this.renderSquare(0)}
-              {this.renderSquare(1)}
-              {this.renderSquare(2)}
-            </div>
-            <div className="board-row">
-              {this.renderSquare(3)}
-              {this.renderSquare(4)}
-              {this.renderSquare(5)}
-            </div>
-            <div className="board-row">
-              {this.renderSquare(6)}
-              {this.renderSquare(7)}
-              {this.renderSquare(8)}
-            </div>
-          </div>
-        );
-    }
+interface GameState {
+    history:  HistorySnapshot[],
+    winner:   Player,
+    gameOver: boolean,
 }
 
-class Game extends React.Component {
-    constructor(props) {
+export class Game extends React.Component<any, GameState> {
+
+    constructor(props: any) {
         super(props);
 
         let isXFirst = (Math.floor(Math.random() * 2) === 0);
-        let startingPlayer = isXFirst ? 'X' : 'O';
+        let startingPlayer = isXFirst ? Player.X : Player.O;
 
         this.state = {
-            history:       [{
-                player:  startingPlayer,
-                squares: Array(9).fill(null)
+            history: [{
+                player: startingPlayer,
+                squares: Array(9).fill(Player.null)
             }],
-            winner:        null,
-            gameOver:      false,
-        };
+            winner: Player.null,
+            gameOver: false
+        }
     }
 
-    computeState(squares) {
+    computeState(squares: Player[]) {
         const lines = [
             [0,1,2], [3,4,5], [6,7,8], // rows
             [0,3,6], [1,4,7], [2,5,8], // cols
             [0,4,8], [2,4,6]           // diagonals
         ];
 
-        let winner   = null;
+        let winner   = Player.null;
         let hasEmpty = false;
 
         for(let i = 0; i < lines.length; i++) {
@@ -90,11 +57,11 @@ class Game extends React.Component {
 
         this.setState({
             winner:   winner,
-            gameOver: (winner || !hasEmpty)
+            gameOver: !((winner === Player.null) && hasEmpty)
         });
     }
 
-    handleClick(index) {
+    handleClick(index : number) {
         const history = this.state.history;
         const current = history[history.length - 1];
 
@@ -110,9 +77,9 @@ class Game extends React.Component {
         newSquares[index] = current.player;
 
         // Swap player
-        let nextPlayer = 'X';
-        if(current.player === 'X') {
-            nextPlayer = 'O'
+        let nextPlayer = Player.X;
+        if(current.player === Player.X) {
+            nextPlayer = Player.O;
         }
 
         // Update state
@@ -127,7 +94,7 @@ class Game extends React.Component {
         this.computeState(newSquares);
     }
 
-    jumpTo(moveIndex) {
+    jumpTo(moveIndex : number) {
         const history    = this.state.history;
         const newHistory = history.slice(0, moveIndex + 1);
 
@@ -149,8 +116,8 @@ class Game extends React.Component {
 
         // Figure out status
         if(this.state.gameOver) {
-            if(winner) {
-                status = winner + " wins!";
+            if(winner !== Player.null) {
+                status = winner.toString() + " wins!";
 
             } else {
                 status = 'Game Over!';
@@ -184,10 +151,3 @@ class Game extends React.Component {
         );
     }
 }
-
-// ========================================
-
-ReactDOM.render(
-    <Game />,
-    document.getElementById('root')
-);
